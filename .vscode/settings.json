@@ -1,0 +1,8 @@
+{
+  "editor.formatOnSave": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "spring-boot.ls.java.home": "C:\\Users\\CFY\\.jdks\\openjdk-23.0.2",
+  "java.compile.nullAnalysis.mode": "automatic"
+}
+

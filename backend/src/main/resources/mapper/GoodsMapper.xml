@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.goods.mapper.GoodsMapper">
+    <resultMap id="GoodsResultMap" type="com.example.goods.model.Goods">
+        <id property="id" column="id"/>
+        <result property="spuCode" column="spu_code"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="price" column="price"/>
+        <result property="stockNum" column="stock_num"/>
+        <result property="status" column="status"/>
+        <result property="mainImg" column="main_img"/>
+        <result property="description" column="description"/>
+        <result property="warnStock" column="warn_stock"/>
+        <result property="isDelete" column="is_delete"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        g.id, g.spu_code, g.goods_name, g.category_id, c.category_name, g.price, g.stock_num,
+        g.status, g.main_img, g.description, g.warn_stock, g.is_delete, g.create_time, g.update_time
+    </sql>
+
+    <sql id="QueryWhere">
+        WHERE g.is_delete = 0
+        <if test="query.status != null">
+            AND g.status = #{query.status}
+        </if>
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (g.goods_name LIKE CONCAT('%', #{query.keyword}, '%') OR g.spu_code LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.categoryId != null">
+            AND g.category_id = #{query.categoryId}
+        </if>
+        <if test="query.stockStatus != null and query.stockStatus == 'normal'">
+            AND g.stock_num &gt; COALESCE(g.warn_stock, #{query.warnStock})
+        </if>
+        <if test="query.stockStatus != null and query.stockStatus == 'warning'">
+            AND g.stock_num &gt; 0 AND g.stock_num &lt;= COALESCE(g.warn_stock, #{query.warnStock})
+        </if>
+        <if test="query.stockStatus != null and query.stockStatus == 'empty'">
+            AND g.stock_num &lt;= 0
+        </if>
+        <if test="query.startDate != null">
+            AND DATE(g.create_time) &gt;= #{query.startDate}
+        </if>
+        <if test="query.endDate != null">
+            AND DATE(g.create_time) &lt;= #{query.endDate}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="GoodsResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM goods g
+        LEFT JOIN goods_category c ON c.id = g.category_id
+        <include refid="QueryWhere"/>
+        ORDER BY g.create_time DESC, g.id DESC
+        LIMIT #{query.limit} OFFSET #{query.offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(1)
+        FROM goods g
+        LEFT JOIN goods_category c ON c.id = g.category_id
+        <include refid="QueryWhere"/>
+    </select>
+
+    <select id="selectStats" resultType="com.example.goods.dto.DashboardStats">
+        SELECT
+            COUNT(1) AS total,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS onSale,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN stock_num &lt;= COALESCE(warn_stock, #{warnStock}) THEN 1 ELSE 0 END) AS stockWarning
+        FROM goods
+        WHERE is_delete = 0
+    </select>
+
+    <select id="selectById" resultMap="GoodsResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM goods g
+        LEFT JOIN goods_category c ON c.id = g.category_id
+        WHERE g.id = #{id} AND g.is_delete = 0
+    </select>
+
+    <select id="selectBySpuCode" resultMap="GoodsResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM goods g
+        LEFT JOIN goods_category c ON c.id = g.category_id
+        WHERE g.spu_code = #{spuCode} AND g.is_delete = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO goods (spu_code, goods_name, category_id, price, stock_num, status, main_img, description, warn_stock)
+        VALUES (#{spuCode}, #{goodsName}, #{categoryId}, #{price}, #{stockNum}, #{status}, #{mainImg}, #{description}, #{warnStock})
+    </insert>
+
+    <update id="update">
+        UPDATE goods
+        SET spu_code = #{spuCode},
+            goods_name = #{goodsName},
+            category_id = #{categoryId},
+            price = #{price},
+            stock_num = #{stockNum},
+            status = #{status},
+            main_img = #{mainImg},
+            description = #{description},
+            warn_stock = #{warnStock},
+            update_time = NOW()
+        WHERE id = #{id} AND is_delete = 0
+    </update>
+
+    <update id="updateStatus">
+        UPDATE goods SET status = #{status}, update_time = NOW() WHERE id = #{id} AND is_delete = 0
+    </update>
+
+    <update id="updateStatusBatch">
+        UPDATE goods
+        SET status = #{status}, update_time = NOW()
+        WHERE is_delete = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateStock">
+        UPDATE goods SET stock_num = #{stockNum}, update_time = NOW() WHERE id = #{id} AND is_delete = 0
+    </update>
+
+    <update id="updateStockBatch">
+        UPDATE goods
+        SET stock_num = #{stockNum}, update_time = NOW()
+        WHERE is_delete = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="logicalDelete">
+        UPDATE goods SET is_delete = 1, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="logicalDeleteBatch">
+        UPDATE goods
+        SET is_delete = 1, update_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>
+

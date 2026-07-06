@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot: GoodsManagementApplication",
+      "request": "launch",
+      "mainClass": "com.example.goods.GoodsManagementApplication",
+      "projectName": "goods-management-backend",
+      "cwd": "${workspaceFolder}/backend"
+    }
+  ]
+}
+

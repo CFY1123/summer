@@ -1,0 +1,15 @@
+[Unit]
+Description=Goods Admin Spring Boot Backend
+After=network.target mysql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/goods-admin/backend
+ExecStart=/usr/bin/java -jar /opt/goods-admin/backend/app.jar
+Restart=always
+RestartSec=5
+Environment=SPRING_PROFILES_ACTIVE=prod
+
+[Install]
+WantedBy=multi-user.target
+
