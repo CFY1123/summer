@@ -1,4 +1,8 @@
 import re
+from math import sqrt
+
+
+VECTOR_DIMENSION = 64
 
 
 def split_text(text: str, chunk_size: int = 800) -> list[str]:
@@ -49,6 +53,26 @@ def pick_keywords(text: str, limit: int = 8) -> list[str]:
         counts[word] = counts.get(word, 0) + 1
     ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
     return [word for word, _ in ranked[:limit]]
+
+
+def vectorize_text(text: str, dimension: int = VECTOR_DIMENSION) -> list[float]:
+    tokens = re.findall(r"[\u4e00-\u9fa5]{1,2}|[A-Za-z][A-Za-z0-9_-]{1,}", text.lower())
+    vector = [0.0] * dimension
+    for token in tokens:
+        index = abs(hash(token)) % dimension
+        vector[index] += 1.0
+
+    length = sqrt(sum(value * value for value in vector))
+    if length == 0:
+        return vector
+    return [round(value / length, 6) for value in vector]
+
+
+def cosine_similarity(left: list[float], right: list[float]) -> float:
+    if not left or not right:
+        return 0.0
+    size = min(len(left), len(right))
+    return round(sum(left[index] * right[index] for index in range(size)), 6)
 
 
 def make_question_from_text(text: str, index: int, difficulty: str = "medium") -> dict:

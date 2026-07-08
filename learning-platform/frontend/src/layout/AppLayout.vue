@@ -21,6 +21,7 @@
         aria-label="主导航"
       >
         <el-menu-item index="/home">首页</el-menu-item>
+        <el-menu-item index="/learning-workbench">学习工作台</el-menu-item>
         <el-menu-item index="/learning-roadmap">路线和资料</el-menu-item>
         <el-menu-item index="/practice-agent">AI智能刷题</el-menu-item>
         <el-menu-item index="/interview-questions">热门面试题</el-menu-item>
@@ -150,7 +151,7 @@ const themeMode = ref<ThemeMode>(resolveInitialThemeMode());
 // 手机端底部导航只承载最高频的五个公开主功能入口。
 const mobileNavItems: MobileNavItem[] = [
   { path: '/home', label: '首页', key: '首' },
-  { path: '/learning-roadmap', label: '路线', key: '路' },
+  { path: '/learning-workbench', label: '工作台', key: '学' },
   { path: '/practice-agent', label: '刷题', key: '练' },
   { path: '/interview-questions', label: '面试', key: '题' },
   { path: '/suggestions-comments', label: '互动', key: '评' },

@@ -5,6 +5,7 @@ import { updatePageSeo } from '../utils/seo';
 
 const HomePage = () => import('../pages/home/HomePage.vue');
 const LearningRoadmapPage = () => import('../pages/learning-roadmap/LearningRoadmapPage.vue');
+const LearningWorkbenchPage = () => import('../pages/learning-workbench/LearningWorkbenchPage.vue');
 const SuggestionsCommentsPage = () => import('../pages/suggestions-comments/SuggestionsCommentsPage.vue');
 const InterviewQuestionsPage = () => import('../pages/interview-questions/InterviewQuestionsPage.vue');
 const PracticeAgentPage = () => import('../pages/practice-agent/PracticeAgentPage.vue');
@@ -29,6 +30,12 @@ const router = createRouter({
           name: 'learning-roadmap',
           component: LearningRoadmapPage,
           meta: { title: 'Learning Roadmap', canonicalPath: '/learning-roadmap', structuredDataType: 'LearningResource' },
+        },
+        {
+          path: 'learning-workbench',
+          name: 'learning-workbench',
+          component: LearningWorkbenchPage,
+          meta: { title: 'Learning Workbench', canonicalPath: '/learning-workbench', structuredDataType: 'LearningResource' },
         },
         {
           path: 'suggestions-comments',

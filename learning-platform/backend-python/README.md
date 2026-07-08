@@ -49,12 +49,13 @@ powershell -ExecutionPolicy Bypass -File run-dev.ps1
 - 课程大纲：基于知识库生成章/节两级大纲。
 - 学习进度：记录未开始、学习中、已完成，提供进度看板。
 - 在线测验：按章节自动出题、答题批改、考试历史、错题本。
+- 学习工作台：前端提供知识库、章节、测验、错题的一体化操作入口。
 - 人脸识别：摄像头采集两帧，保存本地特征模板，提供简单活体检测和备用密码登录。
 - 语音交互：浏览器语音识别指令、语音播报反馈、语音开关。
 
 ## AI 依赖
 
-基础后端依赖在 `requirements.txt`，LangChain 和 Chroma 放在 `requirements-ai.txt`。开始写知识库模块前再安装：
+基础后端依赖在 `requirements.txt`。当前知识库默认使用本地轻量向量索引原型，便于离线验收；LangChain 和 Chroma 放在 `requirements-ai.txt`，后续可以平滑替换为真实向量数据库：
 
 ```powershell
 cd learning-platform/backend-python

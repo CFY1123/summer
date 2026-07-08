@@ -127,7 +127,12 @@ async function runCommand(rawText: string): Promise<void> {
     return;
   }
 
-  if (commandText.includes('打开学习') || commandText.includes('学习路线') || commandText.includes('查看资料')) {
+  if (commandText.includes('打开学习') || commandText.includes('学习工作台') || commandText.includes('知识库')) {
+    await navigate('/learning-workbench', '已打开学习工作台');
+    return;
+  }
+
+  if (commandText.includes('学习路线') || commandText.includes('查看资料')) {
     await navigate('/learning-roadmap', '已打开学习路线');
     return;
   }

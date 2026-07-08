@@ -11,13 +11,15 @@ from sqlalchemy.orm import Session
 from app.core.config import ROOT_DIR, settings
 from app.services.db_utils import camel_row
 from app.services.document_parser import SUPPORTED_EXTENSIONS, parse_document
-from app.services.text_utils import make_question_from_text, pick_keywords, split_text, summarize_text
+from app.services.text_utils import cosine_similarity, make_question_from_text, pick_keywords, split_text, summarize_text, vectorize_text
 
 
 DEFAULT_USER_ID = 1
 
 
 def ensure_default_user(db: Session) -> None:
+    ensure_column(db, "document_chunks", "embedding_json", "JSON NULL")
+    ensure_column(db, "document_chunks", "keywords_json", "JSON NULL")
     db.execute(
         text(
             """
@@ -28,6 +30,23 @@ def ensure_default_user(db: Session) -> None:
         )
     )
     db.commit()
+
+
+def ensure_column(db: Session, table_name: str, column_name: str, column_definition: str) -> None:
+    exists = db.execute(
+        text(
+            """
+            SELECT COUNT(1)
+            FROM information_schema.columns
+            WHERE table_schema = DATABASE()
+              AND table_name = :table_name
+              AND column_name = :column_name
+            """
+        ),
+        {"table_name": table_name, "column_name": column_name},
+    ).scalar_one()
+    if int(exists) == 0:
+        db.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}"))
 
 
 def create_knowledge_base(db: Session, name: str, description: str | None = None) -> dict:
@@ -141,14 +160,25 @@ def save_uploaded_document(db: Session, kb_id: int, file: UploadFile) -> dict:
         parsed_text = parse_document(stored_path)
         chunks = split_text(parsed_text)
         for index, chunk in enumerate(chunks):
+            keywords = pick_keywords(chunk, 8)
+            embedding = vectorize_text(chunk)
             db.execute(
                 text(
                     """
-                    INSERT INTO document_chunks (document_id, knowledge_base_id, chunk_index, content)
-                    VALUES (:document_id, :kb_id, :chunk_index, :content)
+                    INSERT INTO document_chunks
+                        (document_id, knowledge_base_id, chunk_index, content, embedding_json, keywords_json)
+                    VALUES
+                        (:document_id, :kb_id, :chunk_index, :content, :embedding_json, :keywords_json)
                     """
                 ),
-                {"document_id": document_id, "kb_id": kb_id, "chunk_index": index, "content": chunk},
+                {
+                    "document_id": document_id,
+                    "kb_id": kb_id,
+                    "chunk_index": index,
+                    "content": chunk,
+                    "embedding_json": json.dumps(embedding),
+                    "keywords_json": json.dumps(keywords, ensure_ascii=False),
+                },
             )
         db.execute(
             text(
@@ -226,6 +256,9 @@ def generate_outline(db: Session, kb_id: int) -> list[dict]:
     if not chunks:
         raise ValueError("Please upload and parse course documents first.")
 
+    db.execute(text("DELETE FROM wrong_questions WHERE question_id IN (SELECT id FROM questions WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id))"), {"kb_id": kb_id})
+    db.execute(text("DELETE FROM quiz_answers WHERE question_id IN (SELECT id FROM questions WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id))"), {"kb_id": kb_id})
+    db.execute(text("DELETE FROM quiz_attempts WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id)"), {"kb_id": kb_id})
     db.execute(text("DELETE FROM chapter_progress WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id)"), {"kb_id": kb_id})
     db.execute(text("DELETE FROM questions WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id)"), {"kb_id": kb_id})
     db.execute(text("DELETE FROM course_chapters WHERE knowledge_base_id = :kb_id"), {"kb_id": kb_id})
@@ -565,21 +598,32 @@ def wrong_question_list(db: Session) -> list[dict]:
 
 
 def search_chunks(db: Session, kb_id: int, keyword: str) -> list[dict]:
+    query_vector = vectorize_text(keyword)
     rows = db.execute(
         text(
             """
-            SELECT id, document_id, knowledge_base_id, chunk_index, content, create_time
+            SELECT id, document_id, knowledge_base_id, chunk_index, content, embedding_json, keywords_json, create_time
             FROM document_chunks
-            WHERE knowledge_base_id = :kb_id AND content LIKE :keyword
+            WHERE knowledge_base_id = :kb_id
             ORDER BY document_id ASC, chunk_index ASC
-            LIMIT 20
             """
         ),
-        {"kb_id": kb_id, "keyword": f"%{keyword}%"},
+        {"kb_id": kb_id},
     )
     results = []
     for row in rows:
         item = camel_row(row)
+        embedding = json.loads(item.pop("embeddingJson") or "[]")
+        keywords = json.loads(item.pop("keywordsJson") or "[]")
+        score = cosine_similarity(query_vector, embedding)
+        if keyword and keyword in item["content"]:
+            score += 0.35
+        if any(keyword.lower() in str(word).lower() for word in keywords):
+            score += 0.2
+        if score <= 0 and keyword not in item["content"]:
+            continue
         item["preview"] = summarize_text(re.sub(r"\s+", " ", item["content"]), 180)
+        item["keywords"] = keywords[:5]
+        item["score"] = round(score, 4)
         results.append(item)
-    return results
+    return sorted(results, key=lambda item: item["score"], reverse=True)[:20]

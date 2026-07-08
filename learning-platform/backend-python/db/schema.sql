@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS document_chunks (
     knowledge_base_id BIGINT NOT NULL,
     chunk_index INT NOT NULL,
     content TEXT NOT NULL,
+    embedding_json JSON NULL,
+    keywords_json JSON NULL,
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_chunks_document (document_id),
     INDEX idx_chunks_kb (knowledge_base_id),
