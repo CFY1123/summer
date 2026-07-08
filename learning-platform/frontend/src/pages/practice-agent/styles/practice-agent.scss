@@ -1,0 +1,1073 @@
+.practice-chat-page {
+  // 页面采用左侧筛选、右侧练习的清爽双栏布局。
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 22px;
+  min-height: calc(100vh - 150px);
+  transition: grid-template-columns 0.22s ease;
+}
+
+.practice-chat-page.is-side-collapsed {
+  // Web 端收起左侧成长栏后，将主要空间让给刷题对话区。
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.practice-side-card,
+.practice-chat-card {
+  border: 1px solid var(--color-border-soft);
+  border-radius: 26px;
+  background: var(--color-glass-surface-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.practice-side-card {
+  align-self: start;
+  padding: 20px;
+  overflow: hidden;
+  transition: padding 0.22s ease;
+}
+
+.practice-side-card.is-collapsed {
+  // 收起时保留一个稳定控制条，座右铭和人物形象一起隐藏。
+  padding: 12px;
+}
+
+.practice-side-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  min-height: 36px;
+  margin-bottom: 12px;
+}
+
+.practice-side-card.is-collapsed .practice-side-toolbar {
+  justify-content: flex-start;
+  margin-bottom: 0;
+}
+
+.practice-side-toggle {
+  min-width: 48px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 74%, transparent);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.practice-side-toggle:hover,
+.practice-side-toggle:focus-visible {
+  // 悬停和键盘聚焦保持一致反馈，确保折叠控制清晰可见。
+  border-color: color-mix(in srgb, var(--color-primary) 36%, var(--color-border));
+  color: var(--color-primary-strong);
+  background: var(--color-primary-softer);
+  outline: none;
+}
+
+.practice-side-content {
+  min-width: 240px;
+}
+
+.filter-card-title {
+  // 顶部使用轻量鼓励语，强化学习陪伴感。
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 240px;
+  min-height: 124px;
+  padding: 22px 10px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 90% 14%, color-mix(in srgb, #f59e0b 22%, transparent), transparent 28%),
+    linear-gradient(135deg, var(--color-primary-softer) 0%, color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)) 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 74%, transparent);
+}
+
+.filter-card-title strong {
+  color: var(--color-heading);
+  font-family: SimSun, '宋体', serif;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.75;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.filter-card-title.is-default-motto strong {
+  // 默认座右铭固定为两行，自定义长句仍按同一宽度自然换行。
+  white-space: nowrap;
+}
+
+.practice-realm-card {
+  // 段位角色直接承接左侧引导语，避免重复展示经验卡片。
+  margin-top: 18px;
+}
+
+.practice-chat-card {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.practice-chat-header {
+  // 头部集中放置分类选择和高频操作，缩短用户操作路径。
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface-soft) 100%);
+}
+
+.practice-category-picker {
+  display: grid;
+  grid-template-columns: auto minmax(220px, 320px);
+  gap: 12px;
+  align-items: center;
+  margin-right: auto;
+  padding: 8px 12px 8px 16px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 999px;
+  background: var(--color-surface-soft);
+}
+
+.practice-category-picker > label {
+  color: var(--color-heading);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.practice-category-picker .el-select {
+  width: 100%;
+}
+
+.practice-category-picker .el-select__wrapper {
+  min-height: 34px;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.practice-category-select-popper .el-select-dropdown__item {
+  // 下拉项保留 Element Plus 原生交互，只增强左侧复选框识别。
+  height: auto;
+  padding: 0 12px;
+}
+
+.practice-category-select-popper .el-select-dropdown__item.is-selected {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.practice-category-select-popper .el-select-dropdown__item::after {
+  display: none;
+}
+
+.main-action-button-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.practice-action-tip {
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  flex: 0 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: help;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.12);
+  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+}
+
+.practice-action-tip:hover {
+  border-color: rgba(255, 255, 255, 0.72);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.practice-action-tip-popper {
+  max-width: 280px;
+  color: var(--color-heading);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.practice-category-option-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+
+.practice-category-checkbox {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.practice-category-option-content.is-checked .practice-category-checkbox {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.practice-category-option-content.is-checked .practice-category-checkbox::after {
+  // 使用 CSS 勾选符号，避免额外引入图标组件。
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  content: '';
+  transform: rotate(45deg);
+}
+
+.practice-category-option-label {
+  overflow: hidden;
+  color: inherit;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main-action-button,
+.sub-action-button {
+  min-width: 108px;
+  font-weight: 700;
+}
+
+.practice-model-summary {
+  // 权益条放在分类和下一题之间，确保用户发起 AI 调用前能看到当前模型。
+  flex: 0 1 auto;
+}
+
+.practice-model-summary .model-entitlement-item {
+  min-width: 112px;
+}
+
+.practice-message-panel {
+  // 对话区留出更大空白，突出刷题内容本身。
+  flex: 1;
+  min-height: 460px;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  padding: 24px;
+  background: linear-gradient(180deg, var(--color-page-bg-soft) 0%, var(--color-surface) 100%);
+}
+
+.guest-login-alert {
+  // 游客提示放在对话区顶部，既不阻断页面浏览，也明确功能使用门槛。
+  margin-bottom: 18px;
+  border-radius: 14px;
+}
+
+.practice-message {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+.practice-message.user {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  // 气泡需要承载流式光标和轻微高亮，因此保持相对定位。
+  position: relative;
+  max-width: min(760px, 88%);
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 20px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.practice-message.is-streaming .message-bubble {
+  // 流式回复使用更轻的蓝绿色描边，强化“正在生成”的即时反馈。
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 96%, transparent), color-mix(in srgb, var(--color-surface-soft) 96%, transparent)),
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 30%);
+  box-shadow: var(--shadow-card);
+}
+
+.practice-message.user .message-bubble {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2f7df6, #35bba8);
+}
+
+.message-text,
+.question-bubble-card p,
+.grading-bubble-card p,
+.grading-detail-grid p {
+  margin: 0;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.message-markdown {
+  white-space: normal;
+}
+
+.message-markdown h1,
+.message-markdown h2,
+.message-markdown h3,
+.message-markdown h4,
+.message-markdown h5,
+.message-markdown h6 {
+  // 讨论阶段支持多级 Markdown 标题，间距保持轻量清爽。
+  margin: 0 0 10px;
+  color: var(--color-heading);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.practice-message.user .message-markdown h1,
+.practice-message.user .message-markdown h2,
+.practice-message.user .message-markdown h3,
+.practice-message.user .message-markdown h4,
+.practice-message.user .message-markdown h5,
+.practice-message.user .message-markdown h6,
+.practice-message.user .message-markdown strong {
+  color: #ffffff;
+}
+
+.message-markdown p {
+  margin: 0 0 8px;
+  line-height: 1.85;
+}
+
+.message-markdown p:last-child,
+.message-markdown ul:last-child,
+.message-markdown ol:last-child {
+  margin-bottom: 0;
+}
+
+.message-markdown ul,
+.message-markdown ol {
+  margin: 8px 0;
+  padding-left: 20px;
+  line-height: 1.8;
+}
+
+.message-markdown code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--color-primary-strong);
+  background: var(--color-primary-softer);
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.streaming-message-text {
+  // 流式输出阶段使用纯文本渲染，降低 Markdown 反复解析导致的闪烁和重排。
+  color: var(--color-text-strong);
+  font-size: 15.5px;
+  letter-spacing: 0.01em;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-rendering: optimizeLegibility;
+}
+
+.streaming-placeholder {
+  // 首包到达前给出稳定占位，避免用户误以为卡死。
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.streaming-spinner {
+  // AI 思考态圆环放在文案右侧，使用明显缺口保证肉眼能看到旋转。
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 2px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  border-top-color: var(--color-primary);
+  border-right-color: transparent;
+  border-bottom-color: color-mix(in srgb, var(--color-accent) 88%, var(--color-primary));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 8%, transparent);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practice-chat-page,
+  .practice-side-card,
+  .practice-side-toggle {
+    transition: none;
+  }
+}
+
+.question-bubble-card,
+.grading-bubble-card {
+  position: relative;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  color: var(--color-text);
+  background: var(--color-surface-soft);
+}
+
+.question-meta-row,
+.grading-score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.question-bubble-card h3 {
+  margin: 0 0 12px;
+  color: var(--color-heading);
+  line-height: 1.7;
+}
+
+.grading-score-row strong {
+  color: var(--color-primary);
+  font-size: 28px;
+}
+
+.grading-advice {
+  color: var(--color-text);
+}
+
+.grading-advice-line {
+  // 当前问题与优化建议分行展示，强化信息层级。
+  display: block;
+  line-height: 1.85;
+}
+
+.grading-advice strong {
+  color: var(--color-heading);
+}
+
+.experience-float {
+  // 经验变化从详情中移出，用轻量浮层减少对评分内容的干扰。
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(61, 91, 132, 0.12);
+}
+
+.experience-float.gain {
+  color: #16a34a;
+  background: color-mix(in srgb, #22c55e 14%, var(--color-surface));
+}
+
+.experience-float.same {
+  color: var(--color-muted);
+  background: var(--color-surface);
+}
+
+.grading-bubble-card .el-collapse {
+  // 评分详情与建议文案拉开间距，降低贴边拥挤感。
+  margin-top: 12px;
+  border-top-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+}
+
+.grading-bubble-card .el-collapse-item__content {
+  padding: 10px 8px 4px;
+}
+
+.grading-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 4px 2px;
+}
+
+.grading-detail-grid > div {
+  // 明细块增加内边距和浅色卡片底，阅读时左侧不再贴边。
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.grading-detail-grid h4 {
+  margin: 0 0 8px;
+  color: var(--color-heading);
+}
+
+.grading-point-list {
+  // 列表化展示命中点和缺失点，便于用户逐条对照改进。
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--color-text);
+  line-height: 1.8;
+}
+
+.practice-input-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px 24px 24px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.badge-award-dialog {
+  // 勋章弹框使用独立卡片质感，替代纯文本 alert 的拥挤观感。
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, #f59e0b 24%, transparent), transparent 32%),
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 30%),
+    linear-gradient(145deg, var(--color-surface) 0%, var(--color-surface-soft) 100%);
+  box-shadow: var(--shadow-panel);
+}
+
+.badge-award-dialog .el-dialog__header {
+  margin: 0;
+  padding: 0;
+}
+
+.badge-award-dialog .el-dialog__body {
+  padding: 0 26px 8px;
+}
+
+.badge-award-dialog .el-dialog__footer {
+  padding: 16px 26px 24px;
+}
+
+.badge-award-header {
+  // 顶部用奖章和轻量渐变营造成就反馈，不再依赖默认弹窗标题。
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 26px 26px 18px;
+}
+
+.badge-award-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, color-mix(in srgb, #f59e0b 18%, var(--color-surface)) 0%, var(--color-surface) 100%);
+  box-shadow: var(--shadow-control);
+  font-size: 30px;
+}
+
+.badge-award-header strong {
+  display: block;
+  color: var(--color-heading);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.badge-award-header p {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.badge-award-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.badge-award-list.multiple {
+  // 多枚勋章时自动使用双列卡片，比换行纯文本更清晰。
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.badge-award-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border-radius: 20px;
+  background: var(--color-glass-surface-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.badge-award-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--color-primary-softer) 0%, color-mix(in srgb, #f59e0b 12%, var(--color-surface)) 100%);
+  font-size: 28px;
+}
+
+.badge-award-copy {
+  min-width: 0;
+}
+
+.badge-award-copy span {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge-award-copy strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-heading);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.badge-award-copy p {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.badge-award-confirm {
+  min-width: 128px;
+  font-weight: 800;
+}
+
+// 刷题页深色模式单独强化对比度，覆盖 Element Plus 与人物卡片的浅色默认样式。
+:root[data-theme='dark'] {
+  .practice-chat-page {
+    color: var(--color-text);
+  }
+
+  .practice-chat-page .practice-side-card,
+  .practice-chat-page .practice-chat-card {
+    background: rgba(17, 24, 39, 0.94);
+    border-color: rgba(96, 165, 250, 0.2);
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+  }
+
+  .practice-chat-page .practice-side-toggle {
+    color: #bfdbfe;
+    background: #172033;
+    border-color: rgba(96, 165, 250, 0.22);
+  }
+
+  .practice-chat-page .practice-side-toggle:hover,
+  .practice-chat-page .practice-side-toggle:focus-visible {
+    color: #f8fbff;
+    background: rgba(96, 165, 250, 0.16);
+    border-color: rgba(96, 165, 250, 0.36);
+  }
+
+  .practice-chat-page .filter-card-title {
+    background:
+      radial-gradient(circle at 90% 14%, rgba(245, 158, 11, 0.18), transparent 30%),
+      linear-gradient(135deg, rgba(96, 165, 250, 0.14) 0%, rgba(82, 214, 164, 0.1) 100%);
+    border-color: rgba(96, 165, 250, 0.22);
+  }
+
+  .practice-chat-page .filter-card-title strong {
+    color: #f8fbff;
+  }
+
+  .practice-chat-page .practice-chat-header,
+  .practice-chat-page .practice-input-bar {
+    background: #111827;
+    border-color: #2a374d;
+  }
+
+  .practice-chat-page .practice-category-picker {
+    background: #172033;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  .practice-chat-page .practice-category-picker > label {
+    color: #eef4ff;
+  }
+
+  .practice-chat-page .practice-category-picker .el-select__wrapper,
+  .practice-chat-page .practice-input-bar .el-textarea__inner {
+    color: #eef4ff;
+    background: #0f172a;
+    box-shadow: 0 0 0 1px #2a374d inset;
+  }
+
+  .practice-chat-page .practice-message-panel {
+    background:
+      radial-gradient(circle at 18% 8%, rgba(96, 165, 250, 0.12), transparent 28%),
+      linear-gradient(180deg, #0b1220 0%, #101827 100%);
+  }
+
+  .practice-chat-page .message-bubble {
+    color: #d8e1ef;
+    background: #172033;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+  }
+
+  .practice-chat-page .practice-message.is-streaming .message-bubble {
+    background:
+      linear-gradient(180deg, rgba(23, 32, 51, 0.96), rgba(17, 24, 39, 0.96)),
+      radial-gradient(circle at 0% 0%, rgba(82, 214, 164, 0.14), transparent 34%);
+    border-color: rgba(96, 165, 250, 0.28);
+  }
+
+  .practice-chat-page .practice-message.user .message-bubble {
+    color: #ffffff;
+    border-color: rgba(96, 165, 250, 0.28);
+    background: linear-gradient(135deg, #2563eb, #0f9f8f);
+  }
+
+  .practice-chat-page .message-markdown h1,
+  .practice-chat-page .message-markdown h2,
+  .practice-chat-page .message-markdown h3,
+  .practice-chat-page .message-markdown h4,
+  .practice-chat-page .message-markdown h5,
+  .practice-chat-page .message-markdown h6,
+  .practice-chat-page .question-bubble-card h3,
+  .practice-chat-page .grading-advice strong,
+  .practice-chat-page .grading-detail-grid h4,
+  .practice-chat-page .streaming-message-text {
+    color: #f8fbff;
+  }
+
+  .practice-chat-page .question-bubble-card,
+  .practice-chat-page .grading-bubble-card,
+  .practice-chat-page .grading-detail-grid > div {
+    color: #d8e1ef;
+    background: #111827;
+    border: 1px solid #2a374d;
+  }
+
+  .practice-chat-page .grading-advice,
+  .practice-chat-page .grading-point-list,
+  .practice-chat-page .grading-detail-grid p,
+  .practice-chat-page .message-markdown p,
+  .practice-chat-page .message-markdown li {
+    color: #d8e1ef;
+  }
+
+  .practice-chat-page .streaming-placeholder {
+    color: #a9b7cc;
+  }
+
+  .practice-chat-page .guest-login-alert {
+    background: rgba(96, 165, 250, 0.12);
+    border-color: rgba(96, 165, 250, 0.26);
+  }
+
+  .practice-chat-page .el-empty__description,
+  .practice-chat-page .el-empty__description p {
+    color: #a9b7cc;
+  }
+
+  .practice-chat-page .el-tag {
+    --el-tag-bg-color: rgba(96, 165, 250, 0.14);
+    --el-tag-border-color: rgba(96, 165, 250, 0.28);
+    --el-tag-text-color: #bfdbfe;
+    color: var(--el-tag-text-color);
+    background-color: var(--el-tag-bg-color);
+    border-color: var(--el-tag-border-color);
+  }
+
+  .practice-chat-page .el-tag--warning {
+    --el-tag-bg-color: rgba(245, 158, 11, 0.14);
+    --el-tag-border-color: rgba(245, 158, 11, 0.3);
+    --el-tag-text-color: #fbbf24;
+  }
+
+  .practice-chat-page .el-tag--success {
+    --el-tag-bg-color: rgba(34, 197, 94, 0.14);
+    --el-tag-border-color: rgba(34, 197, 94, 0.3);
+    --el-tag-text-color: #86efac;
+  }
+
+  .practice-chat-page .el-tag--info {
+    --el-tag-bg-color: rgba(148, 163, 184, 0.12);
+    --el-tag-border-color: rgba(148, 163, 184, 0.28);
+    --el-tag-text-color: #cbd5e1;
+  }
+
+  .practice-chat-page .realm-card {
+    background:
+      radial-gradient(circle at 18% 12%, rgba(245, 158, 11, 0.14), transparent 32%),
+      radial-gradient(circle at 86% 16%, rgba(96, 165, 250, 0.16), transparent 34%),
+      linear-gradient(145deg, rgba(17, 24, 39, 0.96) 0%, rgba(23, 32, 51, 0.94) 100%);
+    border-color: rgba(96, 165, 250, 0.22);
+  }
+
+  .practice-chat-page .realm-figure-wrap {
+    background:
+      radial-gradient(ellipse at 50% 18%, rgba(96, 165, 250, 0.16), transparent 52%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(17, 24, 39, 0.34) 100%);
+  }
+
+  .practice-chat-page .realm-figure-vignette {
+    background:
+      linear-gradient(90deg, rgba(17, 24, 39, 0.74) 0%, transparent 18%, transparent 82%, rgba(17, 24, 39, 0.74) 100%),
+      linear-gradient(180deg, rgba(17, 24, 39, 0.66) 0%, transparent 24%, transparent 68%, rgba(17, 24, 39, 0.8) 100%);
+  }
+
+  .practice-chat-page .realm-label {
+    color: #bfdbfe;
+    background: rgba(96, 165, 250, 0.16);
+  }
+
+  .practice-chat-page .realm-info strong {
+    color: #f8fbff;
+  }
+
+  .practice-chat-page .realm-info small {
+    color: #a9b7cc;
+  }
+
+  .practice-category-select-popper,
+  .practice-category-select-popper .el-select-dropdown,
+  .practice-category-select-popper .el-select-dropdown__wrap,
+  .practice-category-select-popper .el-select-dropdown__list {
+    color: #d8e1ef;
+    background: #111827;
+    border-color: #2a374d;
+  }
+
+  .practice-category-select-popper .el-select-dropdown__item {
+    color: #d8e1ef;
+  }
+
+  .practice-category-select-popper .el-select-dropdown__item.hover,
+  .practice-category-select-popper .el-select-dropdown__item:hover {
+    background: rgba(96, 165, 250, 0.12);
+  }
+
+  .practice-category-select-popper .practice-category-checkbox {
+    background: #0f172a;
+    border-color: #475569;
+  }
+
+  .practice-category-select-popper .practice-category-option-content.is-checked .practice-category-checkbox {
+    background: #60a5fa;
+    border-color: #60a5fa;
+  }
+
+  .badge-award-dialog {
+    background:
+      radial-gradient(circle at 18% 0%, rgba(245, 158, 11, 0.18), transparent 32%),
+      radial-gradient(circle at 92% 18%, rgba(96, 165, 250, 0.16), transparent 30%),
+      linear-gradient(145deg, #111827 0%, #172033 100%);
+  }
+
+  .badge-award-dialog .badge-award-header strong,
+  .badge-award-dialog .badge-award-copy strong {
+    color: #f8fbff;
+  }
+
+  .badge-award-dialog .badge-award-header p,
+  .badge-award-dialog .badge-award-copy p {
+    color: #a9b7cc;
+  }
+
+  .badge-award-dialog .badge-award-item {
+    background: #111827;
+    border-color: rgba(96, 165, 250, 0.22);
+  }
+}
+
+@media (max-width: 980px) {
+  .practice-chat-page,
+  .practice-chat-page.is-side-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-side-card.is-collapsed {
+    // 窄屏折叠时不再保留桌面端 76px 竖条，改成横向控制区。
+    padding: 14px;
+  }
+
+  .practice-side-card.is-collapsed .practice-side-toolbar {
+    justify-content: flex-start;
+  }
+
+  .practice-chat-header {
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: stretch;
+  }
+
+  .practice-category-picker {
+    grid-template-columns: 1fr;
+    margin-right: 0;
+    border-radius: 18px;
+  }
+
+  .main-action-button,
+  .sub-action-button {
+    flex: 1;
+  }
+
+  .practice-input-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .grading-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-award-list.multiple {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .practice-chat-page {
+    // 手机端刷题页改为自然纵向流，避免左右双栏压缩对话区。
+    gap: 0;
+    min-height: auto;
+  }
+
+  .practice-chat-page.is-side-collapsed {
+    // 手机端即使处于折叠状态，也不能沿用桌面竖条列宽。
+    grid-template-columns: 1fr;
+  }
+
+  .practice-side-card,
+  .practice-chat-card {
+    border-radius: 22px;
+  }
+
+  .practice-side-card {
+    // 手机端刷题优先保留题目与输入操作，人物形象不占用首屏空间。
+    display: none;
+  }
+
+  .practice-chat-header {
+    // 高频操作纵向排列，确保分类和按钮都有足够触控空间。
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .practice-category-picker {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .practice-category-picker .el-select__wrapper {
+    min-height: 44px;
+  }
+
+  .main-action-button,
+  .sub-action-button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .practice-message-panel {
+    // 对话区取消桌面最大高度限制，交给页面主滚动承载。
+    min-height: 420px;
+    max-height: none;
+    padding: 16px 12px;
+  }
+
+  .message-bubble {
+    // 消息气泡放宽到接近容器宽度，减少中文长句换行过碎。
+    max-width: 94%;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .practice-message.user .message-bubble {
+    max-width: 92%;
+  }
+
+  .question-bubble-card,
+  .grading-bubble-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .grading-score-row strong {
+    font-size: 24px;
+  }
+
+  .experience-float {
+    margin-left: 0;
+  }
+
+  .practice-input-bar {
+    // 输入栏在手机端单列展示，发送按钮不再挤在文本框右侧。
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .practice-input-bar .el-button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .badge-award-dialog .el-dialog__body {
+    padding: 0 18px 8px;
+  }
+
+  .badge-award-dialog .el-dialog__footer {
+    padding: 14px 18px 20px;
+  }
+
+  .badge-award-header {
+    padding: 22px 18px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .practice-message-panel {
+    min-height: 380px;
+  }
+
+  .message-bubble,
+  .practice-message.user .message-bubble {
+    max-width: 100%;
+  }
+
+  .question-meta-row,
+  .grading-score-row {
+    gap: 8px;
+  }
+
+  .badge-award-item {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+

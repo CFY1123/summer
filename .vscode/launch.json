@@ -7,8 +7,7 @@
       "request": "launch",
       "mainClass": "com.example.goods.GoodsManagementApplication",
       "projectName": "goods-management-backend",
-      "cwd": "${workspaceFolder}/backend"
+      "cwd": "${workspaceFolder}/goods-management/backend"
     }
   ]
 }
-

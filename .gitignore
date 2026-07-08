@@ -1,18 +1,30 @@
 # Java / Maven
-backend/target/
+goods-management/backend/target/
 
 # Node / Vue
-frontend/node_modules/
-frontend/dist/
+goods-management/frontend/node_modules/
+goods-management/frontend/dist/
+learning-platform/frontend/node_modules/
+learning-platform/frontend/dist/
+learning-platform/frontend/.npm-cache/
+learning-platform/frontend/.vite-cache/
+learning-platform/frontend/*.tsbuildinfo
 
 # IDE
 .idea/
 *.iml
+.external/
 
 # Logs
 *.log
 
+# Python backend
+learning-platform/backend-python/.venv/
+learning-platform/backend-python/__pycache__/
+learning-platform/backend-python/**/__pycache__/
+learning-platform/backend-python/.env
+learning-platform/backend-python/storage/
+
 # OS
 .DS_Store
 Thumbs.db
-

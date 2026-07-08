@@ -1,0 +1,105 @@
+<template>
+  <el-dialog v-model="visible" title="登录账号" aria-label="登录账号" width="440px" class="auth-dialog modern-auth-dialog" destroy-on-close align-center>
+    <el-form :model="form" label-position="top" class="auth-form" @submit.prevent @keyup.enter="submitLogin">
+      <h2 class="sr-only">登录账号</h2>
+      <el-form-item label="用户名或邮箱">
+        <el-input
+          v-model.trim="form.username"
+          aria-label="用户名或邮箱"
+          autocomplete="username"
+          placeholder="请输入用户名或邮箱"
+          maxlength="128"
+          size="large"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input
+          v-model="form.password"
+          aria-label="密码"
+          autocomplete="current-password"
+          placeholder="请输入密码"
+          type="password"
+          maxlength="64"
+          size="large"
+          show-password
+        />
+      </el-form-item>
+      <p v-if="formError" class="auth-form-error" role="alert">{{ formError }}</p>
+    </el-form>
+
+    <template #footer>
+      <div class="login-dialog-footer">
+        <el-button plain @click="showFaceAuthDialog = true">人脸登录/注册</el-button>
+        <AuthDialogFooter
+          confirm-text="立即登录"
+          :loading="submitting"
+          @cancel="visible = false"
+          @confirm="submitLogin"
+        />
+      </div>
+    </template>
+  </el-dialog>
+  <FaceAuthDialog v-model="showFaceAuthDialog" />
+</template>
+
+<script setup lang="ts">
+import { ElMessage } from 'element-plus/es/components/message/index.mjs';
+import { reactive, ref } from 'vue';
+import { useAuthStore } from '../../stores/auth';
+import { resolveErrorMessage } from '../../utils/errorMessage';
+import AuthDialogFooter from './AuthDialogFooter.vue';
+import FaceAuthDialog from './FaceAuthDialog.vue';
+
+const visible = defineModel<boolean>({ required: true });
+const authStore = useAuthStore();
+const submitting = ref(false);
+const formError = ref('');
+const showFaceAuthDialog = ref(false);
+
+// 登录表单只保留本期必需字段。
+const form = reactive({
+  username: '',
+  password: '',
+});
+
+/**
+ * 提交登录表单。
+ */
+async function submitLogin(): Promise<void> {
+  if (!form.username || !form.password) {
+    formError.value = '请输入用户名或邮箱和密码';
+    ElMessage.warning(formError.value);
+    return;
+  }
+
+  submitting.value = true;
+  formError.value = '';
+  try {
+    await authStore.loginByPassword({ ...form });
+    visible.value = false;
+    form.password = '';
+  } catch (error) {
+    formError.value = resolveErrorMessage(error, '登录失败，请稍后重试');
+    ElMessage.error(formError.value);
+  } finally {
+    submitting.value = false;
+  }
+}
+</script>
+
+<style scoped>
+.login-dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.login-dialog-footer :deep(.auth-dialog-footer) {
+  flex: 1;
+}
+
+.login-dialog-footer :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+</style>
