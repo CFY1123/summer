@@ -121,10 +121,33 @@
                   <el-option label="已完成" value="completed" />
                 </el-select>
               </div>
+              <div class="chapter-source-meta">
+                <span>来源分块 {{ chapterContent.sourceChunkCount }} 个</span>
+                <el-tag v-for="keyword in chapterContent.keywords" :key="keyword" size="small" type="info">
+                  {{ keyword }}
+                </el-tag>
+              </div>
               <section v-for="block in chapterContent.content" :key="block.title">
                 <h5>{{ block.title }}</h5>
                 <p>{{ block.text }}</p>
               </section>
+              <div class="learning-page-box" v-if="selectedLearningPage">
+                <div class="learning-page-header">
+                  <h5>{{ selectedLearningPage.title }}</h5>
+                  <span>{{ currentLearningPage + 1 }} / {{ chapterContent.pages.length }} 页</span>
+                </div>
+                <p>{{ selectedLearningPage.text }}</p>
+                <div class="learning-page-actions">
+                  <el-button size="small" :disabled="currentLearningPage === 0" @click="currentLearningPage -= 1">上一页</el-button>
+                  <el-button
+                    size="small"
+                    :disabled="currentLearningPage >= chapterContent.pages.length - 1"
+                    @click="currentLearningPage += 1"
+                  >
+                    下一页
+                  </el-button>
+                </div>
+              </div>
             </template>
             <el-empty v-else description="先选择或生成一个章节" />
           </article>
@@ -264,6 +287,7 @@ const chapters = ref<Chapter[]>([]);
 const chapterContent = ref<ChapterContent | null>(null);
 const selectedChapterId = ref<number | null>(null);
 const selectedProgressStatus = ref('not_started');
+const currentLearningPage = ref(0);
 const progress = ref<ProgressOverview>({ total: 0, completed: 0, percent: 0 });
 const questions = ref<Question[]>([]);
 const quizResult = ref<QuizResult | null>(null);
@@ -280,6 +304,7 @@ const wrongFilter = reactive<{ chapterId?: number; difficulty?: string }>({});
 const newKb = reactive({ name: '', description: '' });
 
 const selectedKb = computed(() => knowledgeBases.value.find((item) => item.id === selectedKbId.value));
+const selectedLearningPage = computed(() => chapterContent.value?.pages[currentLearningPage.value] || null);
 const filteredWrongQuestions = computed(() =>
   wrongQuestions.value.filter((item) => {
     if (wrongFilter.chapterId && item.chapterId !== wrongFilter.chapterId) {
@@ -409,6 +434,7 @@ async function handleGenerateOutline(): Promise<void> {
 async function selectChapter(id: number): Promise<void> {
   selectedChapterId.value = id;
   chapterContent.value = await fetchChapterContent(id);
+  currentLearningPage.value = 0;
   questions.value = await fetchQuestions(id);
   selectedProgressStatus.value = 'not_started';
 }
@@ -666,6 +692,44 @@ async function loadReviewData(): Promise<void> {
   margin: 0 0 14px;
   color: var(--color-text);
   line-height: 1.8;
+}
+
+.chapter-source-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.chapter-source-meta span {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.learning-page-box {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.learning-page-header,
+.learning-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.learning-page-header span {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.learning-page-actions {
+  justify-content: flex-end;
 }
 
 .quiz-toolbar {

@@ -37,6 +37,9 @@ export interface Chapter {
 
 export interface ChapterContent extends Chapter {
   content: Array<{ title: string; text: string }>;
+  keywords: string[];
+  pages: Array<{ pageNo: number; title: string; text: string }>;
+  sourceChunkCount: number;
 }
 
 export interface ProgressOverview {

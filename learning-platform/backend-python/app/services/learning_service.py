@@ -20,6 +20,7 @@ DEFAULT_USER_ID = 1
 def ensure_default_user(db: Session) -> None:
     ensure_column(db, "document_chunks", "embedding_json", "JSON NULL")
     ensure_column(db, "document_chunks", "keywords_json", "JSON NULL")
+    ensure_column(db, "course_chapters", "source_chunk_indexes", "JSON NULL")
     db.execute(
         text(
             """
@@ -252,8 +253,8 @@ def refresh_knowledge_base_counts(db: Session, kb_id: int) -> None:
 
 def generate_outline(db: Session, kb_id: int) -> list[dict]:
     get_knowledge_base(db, kb_id)
-    chunks = get_chunks(db, kb_id)
-    if not chunks:
+    chunk_records = get_chunk_records(db, kb_id)
+    if not chunk_records:
         raise ValueError("Please upload and parse course documents first.")
 
     db.execute(text("DELETE FROM wrong_questions WHERE question_id IN (SELECT id FROM questions WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id))"), {"kb_id": kb_id})
@@ -263,37 +264,52 @@ def generate_outline(db: Session, kb_id: int) -> list[dict]:
     db.execute(text("DELETE FROM questions WHERE chapter_id IN (SELECT id FROM course_chapters WHERE knowledge_base_id = :kb_id)"), {"kb_id": kb_id})
     db.execute(text("DELETE FROM course_chapters WHERE knowledge_base_id = :kb_id"), {"kb_id": kb_id})
 
-    chapter_count = min(max((len(chunks) + 1) // 2, 1), 5)
-    groups = [chunks[index::chapter_count] for index in range(chapter_count)]
+    chapter_count = min(max((len(chunk_records) + 1) // 2, 1), 5)
+    group_size = max((len(chunk_records) + chapter_count - 1) // chapter_count, 1)
+    groups = [chunk_records[index : index + group_size] for index in range(0, len(chunk_records), group_size)]
 
     for chapter_index, group in enumerate(groups, start=1):
-        joined = "\n".join(group)
+        joined = "\n".join(item["content"] for item in group)
+        source_indexes = [item["chunkIndex"] for item in group]
         keywords = pick_keywords(joined, 3)
         title = f"第{chapter_index}章 {keywords[0] if keywords else '核心内容'}"
         result = db.execute(
             text(
                 """
-                INSERT INTO course_chapters (knowledge_base_id, parent_id, title, summary, sort_no)
-                VALUES (:kb_id, 0, :title, :summary, :sort_no)
+                INSERT INTO course_chapters
+                    (knowledge_base_id, parent_id, title, summary, source_chunk_indexes, sort_no)
+                VALUES
+                    (:kb_id, 0, :title, :summary, :source_chunk_indexes, :sort_no)
                 """
             ),
-            {"kb_id": kb_id, "title": title, "summary": summarize_text(joined), "sort_no": chapter_index},
+            {
+                "kb_id": kb_id,
+                "title": title,
+                "summary": summarize_text(joined),
+                "source_chunk_indexes": json.dumps(source_indexes),
+                "sort_no": chapter_index,
+            },
         )
         parent_id = int(result.lastrowid)
         section_titles = keywords[1:] or ["重点概念", "实践应用"]
         for section_index, section_title in enumerate(section_titles[:2], start=1):
+            section_indexes = source_indexes[section_index - 1 :: 2] or source_indexes
+            section_joined = "\n".join(item["content"] for item in group if item["chunkIndex"] in section_indexes)
             db.execute(
                 text(
                     """
-                    INSERT INTO course_chapters (knowledge_base_id, parent_id, title, summary, sort_no)
-                    VALUES (:kb_id, :parent_id, :title, :summary, :sort_no)
+                    INSERT INTO course_chapters
+                        (knowledge_base_id, parent_id, title, summary, source_chunk_indexes, sort_no)
+                    VALUES
+                        (:kb_id, :parent_id, :title, :summary, :source_chunk_indexes, :sort_no)
                     """
                 ),
                 {
                     "kb_id": kb_id,
                     "parent_id": parent_id,
                     "title": f"{chapter_index}.{section_index} {section_title}",
-                    "summary": summarize_text(joined, 180),
+                    "summary": summarize_text(section_joined or joined, 180),
+                    "source_chunk_indexes": json.dumps(section_indexes),
                     "sort_no": section_index,
                 },
             )
@@ -317,10 +333,14 @@ def list_chapters(db: Session, kb_id: int) -> list[dict]:
 
 
 def get_chunks(db: Session, kb_id: int) -> list[str]:
+    return [item["content"] for item in get_chunk_records(db, kb_id)]
+
+
+def get_chunk_records(db: Session, kb_id: int) -> list[dict]:
     rows = db.execute(
         text(
             """
-            SELECT content
+            SELECT id, document_id, knowledge_base_id, chunk_index, content
             FROM document_chunks
             WHERE knowledge_base_id = :kb_id
             ORDER BY document_id ASC, chunk_index ASC
@@ -328,21 +348,76 @@ def get_chunks(db: Session, kb_id: int) -> list[str]:
         ),
         {"kb_id": kb_id},
     )
-    return [row._mapping["content"] for row in rows]
+    return [camel_row(row) for row in rows]
 
 
 def get_chapter_content(db: Session, chapter_id: int) -> dict:
     chapter = get_chapter(db, chapter_id)
-    chunks = get_chunks(db, int(chapter["knowledgeBaseId"]))
-    source = "\n".join(chunks[:3])
+    chunk_records = get_chapter_source_chunks(db, chapter)
+    source_chunks = [item["content"] for item in chunk_records]
+    source = "\n".join(source_chunks)
+    keywords = pick_keywords(source or chapter.get("summary") or chapter["title"], 6)
+    pages = build_learning_pages(source_chunks, chapter["title"])
     return {
         **chapter,
         "content": [
-            {"title": "学习目标", "text": f"理解「{chapter['title']}」相关概念，并能完成基础测验。"},
-            {"title": "知识要点", "text": summarize_text(source, 500)},
-            {"title": "学习建议", "text": "先阅读本节摘要，再完成自动测验；答错的题目会进入错题本。"},
+            {"title": "学习目标", "text": f"理解「{chapter['title']}」相关概念，掌握 {', '.join(keywords[:3]) if keywords else '本章核心知识'}，并能完成基础测验。"},
+            {"title": "知识要点", "text": summarize_text(source or chapter.get("summary") or "", 520)},
+            {"title": "学习建议", "text": "先按分页阅读正文，再完成自动测验；答错的题目会进入错题本用于复盘。"},
         ],
+        "keywords": keywords,
+        "pages": pages,
+        "sourceChunkCount": len(source_chunks),
     }
+
+
+def get_chapter_source_chunks(db: Session, chapter: dict) -> list[dict]:
+    source_indexes = get_chapter_source_indexes(db, chapter)
+    if not source_indexes and int(chapter.get("parentId") or 0) != 0:
+        parent = get_chapter(db, int(chapter["parentId"]))
+        source_indexes = get_chapter_source_indexes(db, parent)
+
+    all_chunks = get_chunk_records(db, int(chapter["knowledgeBaseId"]))
+    if not source_indexes:
+        return all_chunks[:3]
+
+    source_index_set = set(source_indexes)
+    selected = [item for item in all_chunks if int(item["chunkIndex"]) in source_index_set]
+    return selected or all_chunks[:3]
+
+
+def get_chapter_source_indexes(db: Session, chapter: dict) -> list[int]:
+    row = db.execute(
+        text("SELECT source_chunk_indexes FROM course_chapters WHERE id = :id"),
+        {"id": chapter["id"]},
+    ).first()
+    if row is None:
+        return []
+    raw = row._mapping["source_chunk_indexes"]
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return [int(value) for value in raw]
+    try:
+        return [int(value) for value in json.loads(raw)]
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return []
+
+
+def build_learning_pages(source_chunks: list[str], title: str) -> list[dict]:
+    if not source_chunks:
+        return [{"pageNo": 1, "title": "分页学习内容", "text": f"当前章节「{title}」暂无可用资料，请先上传并解析课程文档。"}]
+
+    pages = []
+    for index, chunk in enumerate(source_chunks, start=1):
+        pages.append(
+            {
+                "pageNo": index,
+                "title": f"第 {index} 页：{title} 知识拆解",
+                "text": summarize_text(chunk, 700),
+            }
+        )
+    return pages
 
 
 def get_chapter(db: Session, chapter_id: int) -> dict:
@@ -432,7 +507,7 @@ def reset_progress(db: Session, kb_id: int) -> None:
 
 def generate_questions(db: Session, chapter_id: int, difficulty: str = "medium", count: int = 5) -> list[dict]:
     chapter = get_chapter(db, chapter_id)
-    chunks = get_chunks(db, int(chapter["knowledgeBaseId"]))
+    chunks = [item["content"] for item in get_chapter_source_chunks(db, chapter)]
     source_chunks = chunks[: max(count, 1)] or [chapter.get("summary") or chapter["title"]]
 
     db.execute(text("DELETE FROM questions WHERE chapter_id = :chapter_id"), {"chapter_id": chapter_id})
